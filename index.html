@@ -1756,7 +1756,11 @@ window.addEventListener("popstate", () => {
     if (!str) return '';
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
-
   // Run on page load
-  window.addEventListener("DOMContentLoaded", initDynamicLandingPage);
+  window.addEventListener("DOMContentLoaded", () => {
+    initDynamicLandingPage();
+    checkUrlRatingParameters(); // ⚡ पेज खुलते ही बिना देरी के तुरंत रिव्यू बॉक्स खोलेगा
+  });
+
+  
 </script>
