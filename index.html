@@ -1535,8 +1535,7 @@ window.addEventListener("popstate", () => {
     });
   }
 
-  // 3. 200 Character Counter
-  function updateReviewCharCount() {
+    function updateReviewCharCount() {
     const txt = document.getElementById("formReviewComment");
     const counter = document.getElementById("formCharCounter");
     if (txt && counter) {
@@ -1550,6 +1549,11 @@ window.addEventListener("popstate", () => {
     const commentInput = document.getElementById("formReviewComment");
     const commentText = commentInput ? commentInput.value.trim() : "";
 
+    if (!activeReviewUid) {
+      alert("Error: User UID missing!");
+      return;
+    }
+
     btn.innerText = "POSTING...";
     btn.disabled = true;
 
@@ -1561,31 +1565,29 @@ window.addEventListener("popstate", () => {
       comment: commentText || "Great companion app for Minecraft!",
       user_name: activeReviewName,
       user_photo: activeReviewPhoto,
-      uid: activeReviewUid || "anon_" + Date.now(),
+      uid: activeReviewUid,
       date_string: dateFormatted,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
-      // Firebase me save karein
-      if (activeReviewUid) {
-        await db.collection("app_reviews").doc(activeReviewUid).set(reviewDoc, { merge: true });
-        localStorage.setItem('mmhud_reviewed_' + activeReviewUid, 'true');
-      } else {
-        await db.collection("app_reviews").add(reviewDoc);
-      }
+      await db.collection("app_reviews").doc(activeReviewUid).set(reviewDoc, { merge: true });
 
-      // Hide input form & show permanent lock
+      localStorage.setItem('mmhud_reviewed_' + activeReviewUid, 'true');
+
       document.getElementById("liveUserReviewCard").style.display = "none";
       const lockBox = document.getElementById("reviewAlreadyLockedMsg");
       if (lockBox) lockBox.style.display = "flex";
 
     } catch (e) {
-      console.warn("Review submission fallback:", e.message);
-      document.getElementById("liveUserReviewCard").style.display = "none";
-      document.getElementById("reviewAlreadyLockedMsg").style.display = "flex";
+      console.error("Firebase write error:", e);
+      btn.innerText = "SUBMIT REVIEW";
+      btn.disabled = false;
+      alert("Submission failed: " + e.message);
     }
   }
+
+
 
   // 5. Sync Ratings & Reviews (Real Math & Safe Fallback)
   function syncLiveRatingsAndReviews() {
