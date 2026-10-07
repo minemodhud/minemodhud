@@ -1299,20 +1299,43 @@ window.addEventListener("popstate", () => {
       if (data.apk_url) {
         targetApkDownloadUrl = data.apk_url;
       }
-            // 🚀 Upcoming Button Mode (Direct YouTube Redirect)
-      if (data.is_upcoming === true) {
-        const actionLabel = document.getElementById("btnActionText");
-        const actionBtn = document.getElementById("mainActionButton");
+                  // 🎯 स्मार्ट बटन कंट्रोलर (Update vs Coming Soon vs Install)
+      const actionLabel = document.getElementById("btnActionText");
+      const actionBtn = document.getElementById("mainActionButton");
+
+      // A. अगर यूज़र ऐप के अंदर से अपडेट करने आया है (?action=update)
+      if (isActionUpdateMode) {
+        let dynamicSizeText = (data.app_size_mb) ? ` (${data.app_size_mb} MB)` : "";
+        if (actionLabel) actionLabel.innerText = `UPDATE${dynamicSizeText}`;
+        if (actionBtn) {
+          actionBtn.classList.add("btn-update-mode");
+          actionBtn.style.background = "linear-gradient(135deg, #ffd700 0%, #ff8800 100%)";
+          actionBtn.onclick = handleAppDownloadAction;
+        }
+      }
+      // B. अगर ऐप अभी लॉन्च नहीं हुआ है (is_upcoming: true)
+      else if (data.is_upcoming === true) {
         if (actionLabel) actionLabel.innerText = "COMING SOON";
         if (actionBtn) {
+          actionBtn.classList.remove("btn-update-mode");
           actionBtn.style.background = "linear-gradient(135deg, #00f2fe, #00a8b5)";
           actionBtn.onclick = (e) => {
             e.preventDefault();
-            // सीधे आपके One Day Block चैनल पर नया टैब खुलेगा:
             window.open("https://youtube.com/@onedayblock", "_blank");
           };
         }
       }
+      // C. जब ऐप ऑफिशियली लॉन्च हो जाएगा
+      else {
+        let dynamicSizeText = (data.app_size_mb) ? ` (${data.app_size_mb} MB)` : "";
+        if (actionLabel) actionLabel.innerText = `INSTALL${dynamicSizeText}`;
+        if (actionBtn) {
+          actionBtn.classList.remove("btn-update-mode");
+          actionBtn.style.background = "linear-gradient(135deg, #00f2fe, #20b2aa)";
+          actionBtn.onclick = handleAppDownloadAction;
+        }
+      }
+
 
 
             // // About & Recent Changelog
@@ -1589,7 +1612,7 @@ window.addEventListener("popstate", () => {
 
 
 
-  // 5. Sync Ratings & Reviews (Real Math & Safe Fallback)
+  // 5. Sync Ratings & Reviews (अवतार फ़ोटो + सुरक्षित 5.0 रेटिंग गणित)
   function syncLiveRatingsAndReviews() {
     const listContainer = document.getElementById("reviewsListContainer");
 
@@ -1608,42 +1631,23 @@ window.addEventListener("popstate", () => {
         });
       }
 
-      // 🛡️ Fallback: Agar naya database hai aur 0 review hain toh realistic seed reviews
-      if (reviewsList.length === 0) {
-        starCounts = { 5: 142, 4: 28, 3: 0, 2: 0, 1: 0 };
-        totalRatingSum = (142 * 5) + (28 * 4);
-        reviewsList = [
-          {
-            user_name: "Kumari Shreya",
-            stars: 5,
-            date_string: "30/08/26",
-            comment: "Minemod hud has genuinely become one of the most useful companion apps on my phone. Shaders and textures install seamlessly without broken links."
-          },
-          {
-            user_name: "Subodh Muhuri",
-            stars: 5,
-            date_string: "17/09/26",
-            comment: "Great Minecraft app with a clean UI! Direct downloads are super fast and the AI assistant tools are extremely handy."
-          },
-          {
-            user_name: "Aman Verma",
-            stars: 4,
-            date_string: "22/09/26",
-            comment: "Very useful app for Bedrock mods. Everything works safely, just waiting for more custom survival maps in the next update!"
-          }
-        ];
+      // 🛡️ सुरक्षित गणित (1.0 से 5.0 के बीच लॉक)
+      let totalReviews = reviewsList.length;
+      let avgScore = "5.0";
+
+      if (totalReviews > 0) {
+        let calculated = (totalRatingSum / totalReviews);
+        calculated = Math.min(5.0, Math.max(1.0, calculated));
+        avgScore = calculated.toFixed(1);
       }
 
-      let totalReviews = reviewsList.length;
-      let avgScore = (totalRatingSum / totalReviews).toFixed(1);
-
-      // Score update
+      // रेटिंग स्कोर अपडेट
       const bigRatingEl = document.getElementById("bigRatingVal");
       const metricRatingEl = document.getElementById("metricRating");
       if (bigRatingEl) bigRatingEl.innerText = avgScore;
       if (metricRatingEl) metricRatingEl.innerText = `${avgScore} ★`;
 
-      // Star Progress Bars Fill Calculation (Math.round)
+      // स्टार प्रोग्रेस बार
       let totalBarVotes = starCounts[5] + starCounts[4] + starCounts[3] + starCounts[2] + starCounts[1];
       for (let s = 1; s <= 5; s++) {
         let pct = totalBarVotes > 0 ? (starCounts[s] / totalBarVotes) * 100 : 0;
@@ -1651,32 +1655,54 @@ window.addEventListener("popstate", () => {
         if (bar) bar.style.width = `${pct.toFixed(0)}%`;
       }
 
-      // Render Top 3 Reviews Cards
-      let top3 = reviewsList.slice(0, 3);
-      let reviewsHTML = "";
+      // रिव्यू कार्ड्स रेंडर करना (फ़ोटो या नाम के पहले अक्षर के साथ)
+      if (reviewsList.length === 0) {
+        if (listContainer) {
+          listContainer.innerHTML = `
+            <div style="text-align: center; padding: 25px 15px; color: var(--text-dim); font-size: 12px; font-weight: 600;">
+              No reviews yet. Be the first to rate Minemod hud!
+            </div>`;
+        }
+      } else {
+        let topReviews = reviewsList.slice(0, 5);
+        let reviewsHTML = "";
 
-      top3.forEach((rev) => {
-        let starStr = "★".repeat(rev.stars || 5) + "☆".repeat(5 - (rev.stars || 5));
-        reviewsHTML += `
-          <div class="review-item-card">
-            <div class="review-top-meta">
-              <span class="reviewer-name">${escapeHTML(rev.user_name || "Verified User")}</span>
-              <span class="review-date">${rev.date_string || "Recently"}</span>
-            </div>
-            <div style="color: var(--gold-star); font-size: 11px; margin-bottom: 4px;">${starStr}</div>
-            <div class="review-comment">${escapeHTML(rev.comment || "Great companion for Minecraft!")}</div>
-          </div>`;
-      });
+        topReviews.forEach((rev) => {
+          let starCount = Math.min(5, Math.max(1, parseInt(rev.stars) || 5));
+          let starStr = "★".repeat(starCount) + "☆".repeat(5 - starCount);
 
-      if (listContainer) listContainer.innerHTML = reviewsHTML;
+          // 🖼️ अगर Google फ़ोटो URL है तो इमेज, वरना नाम का पहला अक्षर (जैसे 'K')
+          let firstLetter = (rev.user_name || "U").charAt(0).toUpperCase();
+          let avatarHtml = (rev.user_photo && rev.user_photo.startsWith("http"))
+            ? `<img src="${rev.user_photo}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid var(--cyan-glow);" alt="Avatar">`
+            : `<div style="width: 24px; height: 24px; border-radius: 50%; background: #20b2aa; color: #081012; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex-shrink: 0;">${firstLetter}</div>`;
 
-      // Check URL for ?rate= param right after reviews are loaded
+          reviewsHTML += `
+            <div class="review-item-card">
+              <div class="review-top-meta">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  ${avatarHtml}
+                  <span class="reviewer-name">${escapeHTML(rev.user_name || "Verified User")}</span>
+                </div>
+                <span class="review-date">${rev.date_string || "Recently"}</span>
+              </div>
+              <div style="color: var(--gold-star); font-size: 11px; margin-bottom: 4px;">${starStr}</div>
+              <div class="review-comment">${escapeHTML(rev.comment || "Great companion for Minecraft!")}</div>
+            </div>`;
+        });
+
+        if (listContainer) listContainer.innerHTML = reviewsHTML;
+      }
+
       checkUrlRatingParameters();
 
     }, (error) => {
-      console.warn("Live reviews fallback active:", error);
+      console.warn("Live reviews sync active:", error);
     });
   }
+
+
+      
 
 
      // 8. Render Footer Social Pills (All Platforms Supported)
