@@ -4,22 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- 🌐 1. Google सर्च और ब्राउज़र टैब के लिए लोगो (Favicon) -->
-  <link rel="icon" type="image/png" href="icon.png">
+  <!-- 🌐 लोगो और ऐप आइकॉन (रिलेटिव पाथ - नो 404 एरर) -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
 
-  <!-- 🏷️ 2. Google सर्च में दिखने वाला मुख्य नीला टाइटल -->
+  <!-- 🏷️ सर्च टाइटल और कैनोनिकल यूआरएल -->
   <title>Minemod hud - Minecraft Mods, Shaders & Addons</title>
+  <link rel="canonical" href="https://minemodhud.github.io/minemodhud/">
 
-  <!-- 📝 3. Google सर्च में दिखने वाला विवरण (Description) -->
+  <!-- 📝 सर्च विवरण और रोबोट्स -->
   <meta name="description" content="Minemod hud (माइंड मॉड हब) - Download official Minecraft Bedrock and Java mods, texture packs, skins, and shaders. Powered by One Day Block.">
-
-  <!-- 🔍 4. सर्च कीवर्ड्स और रोबोट्स -->
   <meta name="keywords" content="Minemod hud, Minemod hub, माइंड मॉड हब, Minecraft mods, Bedrock addons, One Day Block">
   <meta name="robots" content="index, follow">
-</head>
 
-<style>
+  <!-- 🏢 Google को सही ब्रांड नाम बताने का Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Minemod hud",
+    "alternateName": ["Minemod hub", "माइंड मॉड हब"],
+    "url": "https://minemodhud.github.io/minemodhud/"
+  }
+  </script>
+
+  <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+
 
   :root {
     --bg-dark: #0c1214;
@@ -1812,3 +1823,5 @@ window.addEventListener("popstate", () => {
 
   
 </script>
+</body>
+</html>
